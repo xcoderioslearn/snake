@@ -1,12 +1,9 @@
 extends Node2D
 
-# divide by CELL_SIZE  to generate grid size
-const CELL_SIZE: int = 32   
-#speed of snake    
+const CELL_SIZE: int = 32     
 var step_time: float = 0.5      
 		  
 
-# --- Runtime state ---
 var grid_size: Vector2i
 var snake: Array[Vector2i] = []
 var dir: Vector2i = Vector2i.RIGHT
@@ -14,7 +11,7 @@ var next_dir: Vector2i = Vector2i.RIGHT
 var food: Vector2i
 var alive: bool = true
 var paused: bool = false
-var wrap: bool = true    
+var wrapper: bool = true    
 var score: int = 0
 var accumulator: float = 0.0
 
@@ -42,9 +39,6 @@ func _update_grid_from_viewport() -> void:
 		int(floor(px_size.x / float(CELL_SIZE))),
 		int(floor(px_size.y / float(CELL_SIZE)))
 	)
-	print(px_size)
-	print(grid_size)
-	print(CELL_SIZE)
 
 func _reset() -> void:
 	alive = true
@@ -52,7 +46,9 @@ func _reset() -> void:
 	score = 0
 	dir = Vector2i.RIGHT
 	next_dir = dir
+	@warning_ignore("integer_division")
 	var cx: int = grid_size.x / 2
+	@warning_ignore("integer_division")
 	var cy: int = grid_size.y / 2
 	snake = [
 		Vector2i(cx, cy),
@@ -112,7 +108,7 @@ func _step() -> void:
 	var head: Vector2i = snake[0]
 	var new_head := head + dir
 
-	if wrap:
+	if wrapper:
 		new_head.x = (new_head.x + grid_size.x) % grid_size.x
 		new_head.y = (new_head.y + grid_size.y) % grid_size.y
 	else:
@@ -133,7 +129,6 @@ func _step() -> void:
 			_save_high_score()
 		if score % 2 == 0:
 			step_time = max(0.10, step_time - 0.05)
-			print(step_time)
 		_spawn_food()
 	else:
 		snake.pop_back()
@@ -148,7 +143,6 @@ func _draw() -> void:
 	var board_px := Vector2(grid_size) * float(CELL_SIZE)
 	draw_rect(Rect2(Vector2.ZERO, board_px), Color(1, 1, 1), true)
 
-	# grid lines
 	for x in grid_size.x + 1:
 		var xx := float(x * CELL_SIZE)
 		draw_line(Vector2(xx, 0), Vector2(xx, board_px.y), Color(0, 0, 0.9, 0.15), 1.0)
@@ -156,18 +150,15 @@ func _draw() -> void:
 		var yy := float(y * CELL_SIZE)
 		draw_line(Vector2(0, yy), Vector2(board_px.x, yy), Color(0, 0, 0.9, 0.15), 1.0)
 
-	# food
 	var food_rect := Rect2(Vector2(food) * float(CELL_SIZE), Vector2(CELL_SIZE, CELL_SIZE)).grow(-2)
 	draw_rect(food_rect, Color(1.0, 0.35, 0.35), true)
 
-	# snake
 	for i in snake.size():
 		var p: Vector2i = snake[i]
 		var r := Rect2(Vector2(p) * float(CELL_SIZE), Vector2(CELL_SIZE, CELL_SIZE)).grow(-2)
 		var c := Color(0, 0, 0) if i == 0 else Color(0, 0, 0, 0.5)
 		draw_rect(r, c, true)
 
-	# HUD
 	var font: Font = ThemeDB.fallback_font
 	var size: int = 20
 	var margin := 8.0
@@ -182,14 +173,12 @@ func _draw() -> void:
 		Color.BLACK
 	)
 
-	# Game Over menu
 	if not alive:
 		var big := int(round(size * 1.3))
 		var msg := "Game Over\nPress Space to Restart\nPress H to Reset High Score"
 		draw_rect(Rect2(Vector2.ZERO, board_px), Color(1, 1, 1, 0.8), true)
 		_draw_multiline_centered(font, msg, big, board_px)
 
-	# Pause menu
 	if paused and alive:
 		var big := int(round(size * 1.5))
 		var msg := "Paused\nPress Space to Continue\nPress R to Restart\nPress H to Reset High Score"
@@ -210,7 +199,6 @@ func _draw_multiline_centered(font: Font, text: String, size: int, area: Vector2
 		)
 		draw_string(font, pos, line, HORIZONTAL_ALIGNMENT_LEFT, -1.0, size, Color(0,0,0,0.9))
 
-# Saving Logic 
 func _load_high_score() -> void:
 	if ResourceLoader.exists(SAVE_PATH):
 		high_score = ResourceLoader.load(SAVE_PATH) as HighScore
